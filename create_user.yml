@@ -1,15 +1,19 @@
 ---
-- name: Create a new user on Linux
+- name: Create a new user on Linux with a password
   hosts: all
   become: yes
   vars:
     # These are default variables. The AWX Survey will override them.
     new_username: "default_user"
     user_shell: "/bin/bash"
+    raw_password: "DefaultPassword123!" # Will be overridden by the AWX Survey
 
   tasks:
-    - name: Ensure the user exists
+    - name: Ensure the user exists with the secure password hash
       user:
         name: "{{ new_username }}"
         shell: "{{ user_shell }}"
+        # This filter safely hashes the plain text variable into a SHA-512 hash
+        password: "{{ raw_password | password_hash('sha512') }}"
         state: present
+      no_log: yes  # Hides the password/hash from AWX console outputs
