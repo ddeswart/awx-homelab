@@ -1,0 +1,15 @@
+---
+- name: Create a new user on Linux
+  hosts: all
+  become: yes
+  vars:
+    # These are default variables. The AWX Survey will override them.
+    new_username: "default_user"
+    user_shell: "/bin/bash"
+
+  tasks:
+    - name: Ensure the user exists
+      user:
+        name: "{{ new_username }}"
+        shell: "{{ user_shell }}"
+        state: present
