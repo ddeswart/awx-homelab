@@ -1,7 +1,7 @@
 ---
 - name: Create a new user on Linux with a password
   hosts: all
-  become: yes
+  become: root
   vars:
     # These are default variables. The AWX Survey will override them.
     new_username: "default_user"
