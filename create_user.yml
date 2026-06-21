@@ -25,3 +25,18 @@
         name: "{{ new_username }}"
         groups: sudo
         append: true
+
+    - name: Enable password authentication in SSH configuration
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PasswordAuthentication'
+        line: 'PasswordAuthentication yes'
+        state: present
+      notify: Reload SSH socket
+
+    handlers:
+    - name: Reload SSH Socket
+      ansible.builtin.systemd_service:
+        name: ssh.socket
+        state: reloaded
+        daemon_reload: true
