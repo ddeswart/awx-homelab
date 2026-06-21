@@ -6,14 +6,30 @@
     # These are default variables. The AWX Survey will override them.
     new_username: "default_user"
     user_shell: "/bin/bash"
-    raw_password: "DefaultPassword123!" # Will be overridden by the AWX Survey
+    raw_password: "DefaultPassword123!"
+    target_groups: "adm"
+    enable_passwordless_sudo: yes
 
   tasks:
-    - name: Ensure the user exists with the secure password hash
+    - name: Set OS-specific admin group
+      set_fact:
+        admin_group: "{{ 'sudo' if ansible_os_family == 'Debian' else 'wheel' }}"
+        
+    - name: Ensure the user exists with the secure password hash and is added to the admin group
       user:
         name: "{{ new_username }}"
         shell: "{{ user_shell }}"
-        # This filter safely hashes the plain text variable into a SHA-512 hash
         password: "{{ raw_password | password_hash('sha512') }}"
+        groups: "{{ target_groups }},{{ admin_group }}"
+        append: yes
         state: present
-      no_log: yes  # Hides the password/hash from AWX console outputs
+      no_log: yes
+      
+    - name: Configure passwordless sudo for the new user (Optional)
+      when: enable_passwordless_sudo | bool
+      copy:
+        # Places a file named after the user in /etc/sudoers.d/
+        dest: "/etc/sudoers.d/{{ new_username }}"
+        content: "{{ new_username }} ALL=(ALL) NOPASSWD:ALL"
+        mode: '0440' # Required secure permissions for sudoers files
+        validate: 'visudo -cf %s' # CRITICAL: Safely validates syntax before applying to prevent lockouts
