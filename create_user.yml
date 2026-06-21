@@ -6,30 +6,22 @@
     # These are default variables. The AWX Survey will override them.
     new_username: "default_user"
     user_shell: "/bin/bash"
-    raw_password: "DefaultPassword123!"
-    target_groups: "adm"
-    enable_passwordless_sudo: yes
+    plaintext_password: "MySecurePassword123"
+    password_salt: "ubuntu2404salt"
 
-  tasks:
-    - name: Set OS-specific admin group
-      set_fact:
-        admin_group: "{{ 'sudo' if ansible_os_family == 'Debian' else 'wheel' }}"
-        
-    - name: Ensure the user exists with the secure password hash and is added to the admin group
-      user:
+  tasks:    
+    - name: Ensure the user exists with the secure password hash
+      ansible.builtin.user:
         name: "{{ new_username }}"
-        shell: "{{ user_shell }}"
-        password: "{{ raw_password | password_hash('sha512') }}"
-        groups: "{{ target_groups }},{{ admin_group }}"
-        append: yes
         state: present
-      no_log: yes
-      
-    - name: Configure passwordless sudo for the new user (Optional)
-      when: enable_passwordless_sudo | bool
-      copy:
-        # Places a file named after the user in /etc/sudoers.d/
-        dest: "/etc/sudoers.d/{{ new_username }}"
-        content: "{{ new_username }} ALL=(ALL) NOPASSWD:ALL"
-        mode: '0440' # Required secure permissions for sudoers files
-        validate: 'visudo -cf %s' # CRITICAL: Safely validates syntax before applying to prevent lockouts
+        shell: "{{ user_shell }}"
+        create_home: true
+        password: "{{ plaintext_password | ansible.builtin.password_hash('sha512', password_salt) }}"
+        update_password: on_create
+      no_log: true
+
+    - name: Add the user to the sudo group
+      ansible.builtin.user:
+        name: "{{ new_username }}"
+        groups: sudo
+        append: true
