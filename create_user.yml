@@ -34,8 +34,8 @@
         state: present
       notify: Reload SSH socket
 
-    handlers:
-    - name: Reload SSH Socket
+  handlers:
+    - name: Reload SSH socket
       ansible.builtin.systemd_service:
         name: ssh.socket
         state: reloaded
