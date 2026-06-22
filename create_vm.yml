@@ -14,6 +14,8 @@
     vmid: 125
     target_node: "pve"
     template_name: "ubuntu2404"
+    vm_cores: "2"
+    vm_memory: "4096"
     
     # Cloud-Init Variables
     ci_user: "ddimitri"
@@ -58,9 +60,9 @@
 
       # VM hardware layout
         update: yes
-        cores: 4
+        cores: "{{ vm_cores }}"
         sockets: 1
-        memory: 4096
+        memory: "{{ vm_memory }}"
 
       # Cloud-init configuration
         ipconfig:
