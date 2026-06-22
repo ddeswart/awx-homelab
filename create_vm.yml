@@ -29,7 +29,7 @@
         api_user: "{{ pve_api_user }}"
         api_token_id: "{{ pve_api_token_id }}"
         api_token_secret: "{{ pve_api_token_secret }}"
-        api_validate_certs: false
+        validate_certs: false
         
         # Clone Actions
         node: "{{ target_node }}"
@@ -43,7 +43,7 @@
         memory: 4096
         
         # Cloud-Init Parameters
-        searchdomain: "decloudkoning.local"
+        search_domain: "decloudkoning.local"
         nameservers: 
           - "192.168.0.120"
           - "8.8.8.8"
