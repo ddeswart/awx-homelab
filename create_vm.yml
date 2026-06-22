@@ -1,0 +1,66 @@
+---
+- name: Deploy Proxmox VE 9 VM from Template via community.proxmox
+  hosts: localhost
+  gather_facts: false
+  vars:
+    # Proxmox API Credentials (Passed via AWX)
+    pve_api_host: "{{ proxmox_host }}"
+    pve_api_user: "{{ proxmox_user }}"
+    pve_api_token_id: "{{ proxmox_token_id }}"
+    pve_api_token_secret: "{{ proxmox_token_secret }}"
+    
+    # VM Allocation Settings
+    vm_name: "testserver125"
+    vmid: 125
+    target_node: "pve"
+    template_name: "ubuntu2404"
+    
+    # Cloud-Init Variables
+    ci_user: "ddimitri"
+    ci_password: "Ittakes22Tango!"
+    ci_ip: "192.168.0.125/24"
+    ci_gw: "192.168.0.1"
+
+  tasks:
+    - name: Clone VM template and update Cloud-Init via dedicated Proxmox collection
+      community.proxmox.proxmox_kvm:
+        # API Connection
+        api_host: "{{ pve_api_host }}"
+        api_user: "{{ pve_api_user }}"
+        api_token_id: "{{ pve_api_token_id }}"
+        api_token_secret: "{{ pve_api_token_secret }}"
+        api_validate_certs: false
+        
+        # Clone Actions
+        node: "{{ target_node }}"
+        clone: "{{ template_name }}"
+        name: "{{ vm_name }}"
+        newid: "{{ vmid }}"
+        timeout: 300
+        
+        # System Layout
+        cores: 2
+        memory: 4096
+        
+        # Cloud-Init Parameters
+        searchdomain: "decloudkoning.local"
+        nameservers: 
+          - "192.168.0.120"
+          - "8.8.8.8"
+        ciuser: "{{ ci_user }}"
+        cipassword: "{{ ci_password }}"
+        ipconfig:
+          ipconfig0: "ip={{ ci_ip }},gw={{ ci_gw }}"
+      register: clone_result
+
+    - name: Ensure the cloned VM is started
+      community.proxmox.proxmox_kvm:
+        api_host: "{{ pve_api_host }}"
+        api_user: "{{ pve_api_user }}"
+        api_token_id: "{{ pve_api_token_id }}"
+        api_token_secret: "{{ pve_api_token_secret }}"
+        api_validate_certs: false
+        node: "{{ target_node }}"
+        vmid: "{{ vmid }}"
+        state: started
+      when: clone_result.changed
