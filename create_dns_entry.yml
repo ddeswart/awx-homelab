@@ -1,0 +1,45 @@
+---
+- name: Add Forward A and Reverse PTR DNS Entries
+  hosts: samba_servers
+  become: true
+  vars:
+    # Default variables (Override these via AWX Extra Vars)
+    samba_server_ip: "192.168.0.120"
+    samba_admin_user: "Administrator"
+    
+    # Forward parameters
+    dns_zone: "decloudkoning.local"
+    dns_record_name: "testvm125"
+    dns_record_value: "192.168.0.125"
+
+    # Reverse parameters (e.g., 0.168.192.in-addr.arpa for network 192.168.0.0/24)
+    reverse_zone: "0.168.192.in-addr.arpa"
+    # The last octet of the IP (e.g., '50' from 192.168.1.50)
+    reverse_record_name: "125" 
+
+  tasks:
+    - name: Add Forward A Record
+      ansible.builtin.shell: >
+        samba-tool dns add 
+        {{ samba_server_ip }} 
+        {{ dns_zone }} 
+        {{ dns_record_name }} 
+        A 
+        {{ dns_record_value }} 
+        -U "{{ samba_admin_user }}%{{ samba_admin_password }}"
+      no_log: true
+      register: forward_result
+      changed_when: "'added successfully' in forward_result.stdout or forward_result.rc == 0"
+
+    - name: Add Reverse PTR Record
+      ansible.builtin.shell: >
+        samba-tool dns add 
+        {{ samba_server_ip }} 
+        {{ reverse_zone }} 
+        {{ reverse_record_name }} 
+        PTR 
+        {{ dns_record_name }}.{{ dns_zone }}.
+        -U "{{ samba_admin_user }}%{{ samba_admin_password }}"
+      no_log: true
+      register: reverse_result
+      changed_when: "'added successfully' in reverse_result.stdout or reverse_result.rc == 0"
