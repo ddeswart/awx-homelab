@@ -52,6 +52,7 @@
         api_token_id: "{{ pve_api_token_id }}"
         api_token_secret: "{{ pve_api_token_secret }}"
         validate_certs: false
+        node: "{{ target_node }}"
         name: "{{ vm_name }}"
         vmid: "{{ vmid }}"
 
