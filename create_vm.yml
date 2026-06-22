@@ -22,7 +22,7 @@
     ci_gw: "192.168.0.1"
 
   tasks:
-    - name: Clone VM template and update Cloud-Init via dedicated Proxmox collection
+    - name: Clone VM template
       community.proxmox.proxmox_kvm:
         # API Connection
         api_host: "{{ pve_api_host }}"
@@ -36,31 +36,51 @@
         clone: "{{ template_name }}"
         name: "{{ vm_name }}"
         newid: "{{ vmid }}"
-        timeout: 300
-        
-        # System Layout
-        cores: 2
+        timeout: 500
+      register: clone_result
+
+    - name: Pause for VM registration
+      ansible.builtin.pause:
+        seconds: 10
+      when: clone_result.changed
+
+    - name: Update VM hardware and Cloud-init configurations
+      community.proxmox.proxmox_kvm:
+      # API Connection
+        api_host: "{{ pve_api_host }}"
+        api_user: "{{ pve_api_user }}"
+        api_token_id: "{{ pve_api_token_id }}"
+        api_token_secret: "{{ pve_api_token_secret }}"
+        validate_certs: false
+
+      # VM hardware layout
+        update: yes
+        cores: 4
+        sockets: 1
         memory: 4096
-        
-        # Cloud-Init Parameters
+
+      # Cloud-init configuration
+        ipconfig:
+          ipconfig0: "ip={{ ci_ip }},gw={{ ci_gw }}"
         searchdomains: "decloudkoning.local"
         nameservers: 
           - "192.168.0.120"
           - "8.8.8.8"
         ciuser: "{{ ci_user }}"
         cipassword: "{{ ci_password }}"
-        ipconfig:
-          ipconfig0: "ip={{ ci_ip }},gw={{ ci_gw }}"
-      register: clone_result
+      register: configuration_result
 
-    - name: Ensure the cloned VM is started
+    - name: Power on the VM
       community.proxmox.proxmox_kvm:
+      # API Connection
         api_host: "{{ pve_api_host }}"
         api_user: "{{ pve_api_user }}"
         api_token_id: "{{ pve_api_token_id }}"
         api_token_secret: "{{ pve_api_token_secret }}"
         validate_certs: false
+
+      # Power options
         node: "{{ target_node }}"
         vmid: "{{ vmid }}"
         state: started
-      when: clone_result.changed
+      when: configuration_result.changed
