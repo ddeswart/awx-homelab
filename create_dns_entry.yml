@@ -5,17 +5,18 @@
   vars:
     # Default variables (Override these via AWX Extra Vars)
     samba_server_ip: "192.168.0.120"
-    samba_admin_user: "Administrator"
+    samba_admin_user: "administrator"
+    samba_admin_password: "yourpassword"
     
     # Forward parameters
     dns_zone: "decloudkoning.local"
-    dns_record_name: "testvm125"
-    dns_record_value: "192.168.0.125"
+    dns_record_name: "yourvmname"
+    dns_record_value: "yourvmip"
 
     # Reverse parameters (e.g., 0.168.192.in-addr.arpa for network 192.168.0.0/24)
     reverse_zone: "0.168.192.in-addr.arpa"
     # The last octet of the IP (e.g., '50' from 192.168.1.50)
-    reverse_record_name: "125" 
+    reverse_record_name: "yourlastIPoctet" 
 
   tasks:
     - name: Add Forward A Record
