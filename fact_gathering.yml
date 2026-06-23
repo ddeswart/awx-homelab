@@ -2,6 +2,9 @@
 - name: Automated Fact Gathering Run
   hosts: all
   gather_facts: true
+  any_errors_fatal: false
+  ignore_unreachable: true
+  
   tasks:
     - name: Force explicit fact collection
       ansible.builtin.setup:
