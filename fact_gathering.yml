@@ -8,10 +8,6 @@
   ignore_unreachable: true
 
   tasks:
-    - name: Ensure target host is actually a Linux system
-      ansible.builtin.meta: end_host
-      when: ansible_system != 'Linux'
-
     - name: Confirm successful fact population in AWX logs
       ansible.builtin.debug:
         msg: "Facts successfully updated for {{ ansible_hostname }} ({{ ansible_distribution }} {{ ansible_distribution_version }})"
