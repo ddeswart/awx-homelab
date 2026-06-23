@@ -1,13 +1,7 @@
 ---
-- name: Automate Linux Fact Gathering
+- name: Automated Fact Gathering Run
   hosts: all
-  gather_facts: true  # Native gathering is active
-  
-  # Optimization settings for AWX execution
-  any_errors_fatal: false
-  ignore_unreachable: true
-
+  gather_facts: true
   tasks:
-    - name: Confirm successful fact population in AWX logs
-      ansible.builtin.debug:
-        msg: "Facts successfully updated for {{ ansible_hostname }} ({{ ansible_distribution }} {{ ansible_distribution_version }})"
+    - name: Force explicit fact collection
+      ansible.builtin.setup:
