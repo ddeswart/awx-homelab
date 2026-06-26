@@ -56,10 +56,7 @@
     # Optional: Adds the remote user running the job (or a specified user) to the docker group
     - name: Add remote user to docker group
       ansible.builtin.user:
-        # Modern fact referencing for the connected SSH user
-        name: "{{ ansible_facts['user_id'] }}"
-        # OLD -> name: "ddimitri"
+        name: "ddimitri"
         groups: docker
         append: true
-      when: ansible_facts['user_id'] is defined
-      # OLD -> when: ansible_user is defined
+      when: ansible_user is defined
