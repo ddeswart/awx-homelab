@@ -19,7 +19,7 @@
     
     # Cloud-Init Variables
     ci_user: "ddimitri"
-    ci_password: "Ittakes22Tango!"
+    ci_password: "yoursecretpassword!"
     ci_ip: "192.168.0.125/24"
     ci_gw: "192.168.0.1"
 
