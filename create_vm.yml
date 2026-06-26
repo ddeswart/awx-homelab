@@ -89,15 +89,11 @@
         vmid: "{{ vmid }}"
         state: started
       when: configuration_result.changed
-
-    - name: Debug Proxmox return values
-      ansible.builtin.debug:
-        var: configuration_result
         
     - name: Share VMID, hostname, and IP with downstream DNS job
       ansible.builtin.set_stats:
         data:
           shared_vmid: "{{ vmid }}"
           shared_vm_name: "{{ vm_name }}"
-          shared_vm_ip: "{{ configuration_result.instance_ip }}"
+          shared_vm_ip: "{{ ci_ip.split('/') | first }}"
         per_host: false
