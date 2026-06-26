@@ -1,0 +1,57 @@
+---
+- name: Automate Docker Installation on Ubuntu 24.04
+  hosts: all
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Ensure required dependencies are installed
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+          - curl
+          - gnupg
+          - python3-debian  # Required for the deb822_repository module
+        state: present
+        update_cache: true
+
+    - name: Configure official Docker APT repository (DEB822 Format)
+      ansible.builtin.deb822_repository:
+        name: docker
+        state: present
+        types: [deb]
+        uris: "https://download.docker.com/linux/ubuntu"
+        suites: ["{{ ansible_distribution_release | lower }}"] # Automatically resolves to 'noble' on 24.04
+        components: [stable]
+        signed_by: "https://download.docker.com/linux/ubuntu/gpg"
+        enabled: true
+
+    - name: Install latest Docker CE and plugins
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: latest
+        update_cache: true
+
+    - name: Ensure Docker service is started and enabled
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Ensure docker group exists
+      ansible.builtin.group:
+        name: docker
+        state: present
+
+    # Optional: Adds the remote user running the job (or a specified user) to the docker group
+    - name: Add remote user to docker group
+      ansible.builtin.user:
+        name: "ddimitri"
+        groups: docker
+        append: true
+      when: ansible_user is defined
