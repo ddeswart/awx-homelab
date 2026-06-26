@@ -1,6 +1,6 @@
 ---
 - name: Automate Docker Installation on Ubuntu 24.04
-  hosts: all
+  hosts: docker_hosts
   become: true
   gather_facts: true
 
