@@ -1,6 +1,6 @@
 ---
 - name: Automate Dockhand Deployment on Ubuntu 24.04
-  hosts: doocker_hosts
+  hosts: docker_hosts
   become: true
   gather_facts: true
   vars:
