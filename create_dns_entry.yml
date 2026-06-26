@@ -3,7 +3,7 @@
   hosts: samba_servers
   become: true
   vars:
-    # Default variables
+    # Samba server variables
     samba_server_ip: "192.168.0.120"
     samba_admin_user: "administrator"
     samba_admin_password: "yoursecretpassword!"
