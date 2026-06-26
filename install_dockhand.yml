@@ -1,0 +1,57 @@
+---
+- name: Automate Dockhand Deployment on Ubuntu 24.04
+  hosts: doocker_hosts
+  become: true
+  gather_facts: true
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    # Configurable variables for the Dockhand deployment
+    dockhand_dir: "/opt/dockhand"
+    dockhand_port: "3000"
+
+  tasks:
+    - name: Ensure Dockhand installation directory exists
+      ansible.builtin.file:
+        path: "{{ dockhand_dir }}"
+        state: directory
+        owner: root
+        group: docker
+        mode: '0775'
+
+    - name: Create docker-compose.yml file for Dockhand
+      ansible.builtin.copy:
+        dest: "{{ dockhand_dir }}/docker-compose.yml"
+        owner: root
+        group: root
+        mode: '0644'
+        content: |
+          services:
+            dockhand:
+              image: fnsys/dockhand:latest
+              container_name: dockhand
+              restart: unless-stopped
+              ports:
+                - "{{ dockhand_port }}:3000"
+              volumes:
+                - /var/run/docker.sock:/var/run/docker.sock
+                - {{ dockhand_dir }}:/app/data
+              environment:
+                - DATA_DIR=/app/data
+
+    - name: Pull and Start Dockhand using Docker Compose
+      ansible.builtin.command:
+        cmd: docker compose up -d
+        chdir: "{{ dockhand_dir }}"
+      register: compose_run
+      changed_when: "'Started' in compose_run.stdout or 'Created' in compose_run.stdout"
+
+    - name: Ensure Dockhand container is running successfully
+      ansible.builtin.command:
+        cmd: docker ps --filter "name=dockhand" --format "{{ '{{' }}.Status{{ '}}' }}"
+      register: container_status
+      changed_when: false
+      failed_when: "'Up' not in container_status.stdout"
+
+    - name: Print Dockhand Access Details
+      ansible.builtin.debug:
+        msg: "Dockhand deployed! You can access it at http://{{ ansible_facts['default_ipv4']['address'] }}:{{ dockhand_port }}"
