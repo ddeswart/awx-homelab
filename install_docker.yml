@@ -3,6 +3,9 @@
   hosts: docker_hosts
   become: true
   gather_facts: true
+  vars:
+    # 1. Silences the Python interpreter warning by explicitly pointing to Python 3
+    ansible_python_interpreter: /usr/bin/python3
 
   tasks:
     - name: Ensure required dependencies are installed
@@ -21,7 +24,9 @@
         state: present
         types: [deb]
         uris: "https://download.docker.com/linux/ubuntu"
-        suites: ["{{ ansible_distribution_release | lower }}"] # Automatically resolves to 'noble' on 24.04
+        # 2. Silences the INJECT_FACTS_AS_VARS warning by using the modern facts dictionary
+        suites: ["{{ ansible_facts['distribution_release'] | lower }}"]
+        # OLD -> suites: ["{{ ansible_distribution_release | lower }}"] # Automatically resolves to 'noble' on 24.04
         components: [stable]
         signed_by: "https://download.docker.com/linux/ubuntu/gpg"
         enabled: true
@@ -51,7 +56,10 @@
     # Optional: Adds the remote user running the job (or a specified user) to the docker group
     - name: Add remote user to docker group
       ansible.builtin.user:
-        name: "ddimitri"
+        # Modern fact referencing for the connected SSH user
+        name: "{{ ansible_facts['user_id'] }}"
+        # OLD -> name: "ddimitri"
         groups: docker
         append: true
-      when: ansible_user is defined
+      when: ansible_facts['user_id'] is defined
+      # OLD -> when: ansible_user is defined
