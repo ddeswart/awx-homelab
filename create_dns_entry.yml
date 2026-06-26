@@ -10,13 +10,9 @@
     
     # Forward parameters
     dns_zone: "decloudkoning.local"
-    dns_record_name: "{{ shared_vm_name }}"
-    dns_record_value: "{{ shared_vm_ip }}"
 
     # Reverse parameters (e.g., 0.168.192.in-addr.arpa for network 192.168.0.0/24)
     reverse_zone: "0.168.192.in-addr.arpa"
-    # The last octet of the IP (e.g., '50' from 192.168.1.50)
-    reverse_record_name: "{{ shared_vmid }}" 
 
   tasks:
     - name: Add Forward A Record
@@ -24,9 +20,9 @@
         samba-tool dns add 
         {{ samba_server_ip }} 
         {{ dns_zone }} 
-        {{ dns_record_name }} 
+        {{ shared_vm_name }} 
         A 
-        {{ dns_record_value }} 
+        {{ shared_vm_ip }} 
         -U "{{ samba_admin_user }}%{{ samba_admin_password }}"
       no_log: true
       register: forward_result
@@ -37,9 +33,9 @@
         samba-tool dns add 
         {{ samba_server_ip }} 
         {{ reverse_zone }} 
-        {{ reverse_record_name }} 
+        {{ shared_vmid }} 
         PTR 
-        {{ dns_record_name }}.{{ dns_zone }}.
+        {{ shared_vm_name }}.{{ dns_zone }}.
         -U "{{ samba_admin_user }}%{{ samba_admin_password }}"
       no_log: true
       register: reverse_result
