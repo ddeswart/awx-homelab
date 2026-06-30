@@ -36,6 +36,10 @@
       https: true
       validate_certs: false
 
+  # This automatically injects connection info into all listed modules
+  module_defaults:
+    netapp.ontap.na_ontap_interface: "{{ ontap_connection }}"
+
   tasks:
     # ----------------------------------------------------
     # 1. NFS Data LIF (IP-based, shared file storage)
@@ -59,7 +63,6 @@
         # Failover configuration (Crucial for High Availability NFS)
         failover_policy: "broadcast-domain-wide"
         firewall_policy: "data"
-        <<: "{{ ontap_connection }}"
 
     # ----------------------------------------------------
     # 2. iSCSI Data LIFs (IP-based, block storage)
@@ -83,7 +86,6 @@
         # iSCSI interfaces do NOT fail over (MPIO handles redundancy)
         failover_policy: "disabled"
         firewall_policy: "data"
-        <<: "{{ ontap_connection }}"
 
     # ----------------------------------------------------
     # 3. iSCSI Data LIF (IP-based, block storage)
@@ -107,7 +109,6 @@
         # iSCSI interfaces do NOT fail over (MPIO handles redundancy)
         failover_policy: "disabled"
         firewall_policy: "data"
-        <<: "{{ ontap_connection }}"
 
 - name: Create NFS server on Trident SVM
   hosts: localhost
@@ -139,6 +140,11 @@
       https: true
       validate_certs: false
 
+  # This automatically injects connection info into all listed modules
+  module_defaults:
+    netapp.ontap.na_ontap_export_policy: "{{ ontap_connection }}"
+    netapp.ontap.na_ontap_export_policy_rule: "{{ ontap_connection }}"
+
     # Define your parameters
     svm_name: "{{ svm_name }}"
     policy_name: "k8s_nodes_policy"
@@ -155,7 +161,6 @@
         state: present
         vserver: "{{ svm_name }}"
         name: "{{ policy_name }}"
-        <<: "{{ ontap_connection }}"
 
     # ----------------------------------------------------
     # 2. Add Rule to Grant Kubernetes Workers Access
@@ -175,7 +180,6 @@
         
         # Rule Ordering
         rule_index: 1                            # Lower numbers execute first
-        <<: "{{ ontap_connection }}"
 
 - name: Create iSCSI service on Trident SVM
   hosts: localhost
