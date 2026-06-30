@@ -23,7 +23,7 @@
         allowed_protocols:
           - nfs
           - iscsi
-        ignore_root_volume_options: true
+        ignore_rest_unsupported_options: true
 
 - name: Configure NetApp ONTAP SVM Data LIFs
   hosts: localhost
