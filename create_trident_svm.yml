@@ -2,33 +2,7 @@
 - name: Create NetApp ONTAP SVM for Trident
   hosts: localhost
   gather_facts: false
-  netapp.ontap.na_ontap_svm:
-    state: present
-    name: "{{ svm_name }}"
-    comment: Created with Ansible
-    # Connection details
-    hostname: "{{ ontap_hostname }}"
-    username: "{{ ontap_username }}"
-    password: "{{ ontap_password }}"
-    https: true
-    validate_certs: false
-    
-    # SVM Configuration
-    ipspace: "Default"
-    root_volume: "{{ root_vol_name }}"
-    root_volume_aggregate: "aggr1"
-    root_volume_security_style: "unix"
-    
-    # Allowed Protocols for Trident (NFS, iSCSI, or both)
-    allowed_protocols:
-      - nfs
-      - iscsi
-
-- name: Configure NetApp ONTAP SVM Data LIFs
-  hosts: localhost
-  gather_facts: false
   vars:
-    # Connection details
     ontap_connection:
       hostname: "{{ ontap_hostname }}"
       username: "{{ ontap_username }}"
@@ -36,7 +10,34 @@
       https: true
       validate_certs: false
 
-  # This automatically injects connection info into all listed modules
+  module_defaults:
+    netapp.ontap.na_ontap_svm: "{{ ontap_connection }}"
+  
+  tasks:
+    - name: Create SVM
+      netapp.ontap.na_ontap_svm:
+        state: present
+        name: "{{ svm_name }}"
+        comment: "Created with Ansible"
+        ipspace: "Default"
+        root_volume: "{{ root_vol_name }}"
+        root_volume_aggregate: "aggr1"
+        root_volume_security_style: "unix"
+        allowed_protocols:
+          - nfs
+          - iscsi
+
+- name: Configure NetApp ONTAP SVM Data LIFs
+  hosts: localhost
+  gather_facts: false
+  vars:
+    ontap_connection:
+      hostname: "{{ ontap_hostname }}"
+      username: "{{ ontap_username }}"
+      password: "{{ ontap_password }}"
+      https: true
+      validate_certs: false
+
   module_defaults:
     netapp.ontap.na_ontap_interface: "{{ ontap_connection }}"
 
@@ -51,16 +52,10 @@
         interface_name: "{{ nfs_lif_name }}"
         home_node: "{{ ontap_node }}"
         home_port: "e0b"
-        
-        # Protocol & Role
         role: data
         protocols: nfs
-        
-        # IP Configuration
         address: "{{ nfs_lif_ip }}"
         netmask: "255.255.255.0"
-        
-        # Failover configuration (Crucial for High Availability NFS)
         failover_policy: "broadcast-domain-wide"
         firewall_policy: "data"
 
@@ -74,16 +69,10 @@
         interface_name: "{{ iscsi_lif_name1 }}"
         home_node: "{{ ontap_node }}"
         home_port: "e0c"
-        
-        # Protocol & Role
         role: data
         protocols: iscsi
-        
-        # IP Configuration
         address: "{{ iscsi_lif_ip1 }}"
         netmask: "255.255.255.0"
-        
-        # iSCSI interfaces do NOT fail over (MPIO handles redundancy)
         failover_policy: "disabled"
         firewall_policy: "data"
 
@@ -97,42 +86,17 @@
         interface_name: "{{ iscsi_lif_name2 }}"
         home_node: "{{ ontap_node }}"
         home_port: "e0c"
-        
-        # Protocol & Role
         role: data
         protocols: iscsi
-        
-        # IP Configuration
         address: "{{ iscsi_lif_ip2 }}"
         netmask: "255.255.255.0"
-        
-        # iSCSI interfaces do NOT fail over (MPIO handles redundancy)
         failover_policy: "disabled"
         firewall_policy: "data"
 
 - name: Create NFS server on Trident SVM
   hosts: localhost
   gather_facts: false
-  netapp.ontap.na_ontap_nfs:
-    state: present
-    # Connection details (best injected via AWX credentials/variables)
-    hostname: "{{ ontap_hostname }}"
-    username: "{{ ontap_username }}"
-    password: "{{ ontap_password }}"
-    https: true
-    validate_certs: false
-
-    # NFS Configuration
-    vserver: "{{ svm_name }}"
-    nfsv3: enabled
-    nfsv4: disabled
-    nfsv41: disabled
-
-- name: Configure ONTAP Export Policy for Kubernetes Worker Nodes
-  hosts: localhost
-  gather_facts: false
   vars:
-    # Connection details
     ontap_connection:
       hostname: "{{ ontap_hostname }}"
       username: "{{ ontap_username }}"
@@ -140,16 +104,34 @@
       https: true
       validate_certs: false
 
-  # This automatically injects connection info into all listed modules
+  module_defaults:
+    netapp.ontap.na_ontap_nfs: "{{ ontap_connection }}"
+
+  tasks:
+    - name: Configure NFS
+      netapp.ontap.na_ontap_nfs:
+        state: present
+        vserver: "{{ svm_name }}"
+        nfsv3: enabled
+        nfsv4: disabled
+        nfsv41: disabled
+
+- name: Configure ONTAP Export Policy for Kubernetes Worker Nodes
+  hosts: localhost
+  gather_facts: false
+  vars:
+    ontap_connection:
+      hostname: "{{ ontap_hostname }}"
+      username: "{{ ontap_username }}"
+      password: "{{ ontap_password }}"
+      https: true
+      validate_certs: false
+
   module_defaults:
     netapp.ontap.na_ontap_export_policy: "{{ ontap_connection }}"
-    netapp.ontap.na_ontap_export_policy_rule: "{{ ontap_connection }}"
-
-    # Define your parameters
+    netapp.ontap.na_ontap_export_policy_rule: "{{ ontap_connection }}
     svm_name: "{{ svm_name }}"
     policy_name: "k8s_nodes_policy"
-    
-    # Subnet or specific IP range of your Kubernetes worker nodes
     k8s_worker_subnet: "192.168.0.0/24" 
 
   tasks:
@@ -184,15 +166,20 @@
 - name: Create iSCSI service on Trident SVM
   hosts: localhost
   gather_facts: false
-  netapp.ontap.na_ontap_iscsi:
-    state: present
-    # Connection details (best injected via AWX credentials/variables)
-    hostname: "{{ ontap_hostname }}"
-    username: "{{ ontap_username }}"
-    password: "{{ ontap_password }}"
-    https: true
-    validate_certs: false
+  vars:
+    ontap_connection:
+      hostname: "{{ ontap_hostname }}"
+      username: "{{ ontap_username }}"
+      password: "{{ ontap_password }}"
+      https: true
+      validate_certs: false
 
-    # iSCSI Configuration
-    vserver: "{{ svm_name }}"
-    service_state: started
+  module_defaults:
+    netapp.ontap.na_ontap_iscsi: "{{ ontap_connection }}"
+
+  tasks:
+    - name: Enable iSCSI
+      netapp.ontap.na_ontap_iscsi:
+        state: present
+        vserver: "{{ svm_name }}"
+        service_state: started
