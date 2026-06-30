@@ -20,12 +20,10 @@
         name: "{{ svm_name }}"
         comment: "Created with Ansible"
         ipspace: "Default"
-        root_volume: "{{ root_vol_name }}"
-        root_volume_aggregate: "aggr1"
-        root_volume_security_style: "unix"
         allowed_protocols:
           - nfs
           - iscsi
+        ignore_root_volume_options: true
 
 - name: Configure NetApp ONTAP SVM Data LIFs
   hosts: localhost
