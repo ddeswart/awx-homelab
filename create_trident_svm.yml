@@ -127,6 +127,56 @@
     nfsv4: disabled
     nfsv41: disabled
 
+- name: Configure ONTAP Export Policy for Kubernetes Worker Nodes
+  hosts: localhost
+  gather_facts: false
+  vars:
+    # Connection details
+    ontap_connection:
+      hostname: "{{ ontap_hostname }}"
+      username: "{{ ontap_username }}"
+      password: "{{ ontap_password }}"
+      https: true
+      validate_certs: false
+
+    # Define your parameters
+    svm_name: "{{ svm_name }}"
+    policy_name: "k8s_nodes_policy"
+    
+    # Subnet or specific IP range of your Kubernetes worker nodes
+    k8s_worker_subnet: "192.168.0.0/24" 
+
+  tasks:
+    # ----------------------------------------------------
+    # 1. Create the Export Policy Container
+    # ----------------------------------------------------
+    - name: Create Export Policy on SVM
+      netapp.ontap.na_ontap_export_policy:
+        state: present
+        vserver: "{{ svm_name }}"
+        name: "{{ policy_name }}"
+        <<: "{{ ontap_connection }}"
+
+    # ----------------------------------------------------
+    # 2. Add Rule to Grant Kubernetes Workers Access
+    # ----------------------------------------------------
+    - name: Create Export Policy Rule for Kubernetes Subnet
+      netapp.ontap.na_ontap_export_policy_rule:
+        state: present
+        vserver: "{{ svm_name }}"
+        policy_name: "{{ policy_name }}"
+        
+        # Rule Specifics
+        client_match: "{{ k8s_worker_subnet }}" # Matches the Kubernetes worker node IP block
+        ro_rule: any                             # Read-Only access allowed via any protocol (sys, krb5, etc.)
+        rw_rule: any                             # Read-Write access allowed via any protocol
+        super_user_security: any                 # Allows 'root' on the K8s node to act as 'root' on the storage (required for many K8s apps)
+        protocol: nfs                            # Limit this rule to NFS traffic
+        
+        # Rule Ordering
+        rule_index: 1                            # Lower numbers execute first
+        <<: "{{ ontap_connection }}"
+
 - name: Create iSCSI service on Trident SVM
   hosts: localhost
   gather_facts: false
