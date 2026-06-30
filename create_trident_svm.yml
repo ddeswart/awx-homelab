@@ -1,0 +1,144 @@
+---
+- name: Create NetApp ONTAP SVM for Trident
+  hosts: localhost
+  gather_facts: false
+  netapp.ontap.na_ontap_svm:
+    state: present
+    name: "{{ svm_name }}"
+    comment: Created with Ansible
+    # Connection details
+    hostname: "{{ ontap_hostname }}"
+    username: "{{ ontap_username }}"
+    password: "{{ ontap_password }}"
+    https: true
+    validate_certs: false
+    
+    # SVM Configuration
+    ipspace: "Default"
+    root_volume: "trident_svm_root"
+    root_volume_aggregate: "aggr1"
+    root_volume_security_style: "unix"
+    
+    # Allowed Protocols for Trident (NFS, iSCSI, or both)
+    allowed_protocols:
+      - nfs
+      - iscsi
+
+- name: Configure NetApp ONTAP SVM Data LIFs
+  hosts: localhost
+  gather_facts: false
+  vars:
+    # Connection details
+    ontap_connection:
+      hostname: "{{ ontap_hostname }}"
+      username: "{{ ontap_username }}"
+      password: "{{ ontap_password }}"
+      https: true
+      validate_certs: false
+
+  tasks:
+    # ----------------------------------------------------
+    # 1. NFS Data LIF (IP-based, shared file storage)
+    # ----------------------------------------------------
+    - name: Create NFS Data LIF for Trident
+      netapp.ontap.na_ontap_interface:
+        state: present
+        vserver: "{{ svm_name }}"
+        interface_name: "{{ nfs_lif_name }}"
+        home_node: "{{ ontap_node }}"
+        home_port: "e0c"
+        
+        # Protocol & Role
+        role: data
+        protocols: nfs
+        
+        # IP Configuration
+        address: "{{ nfs_lif_ip }}"
+        netmask: "255.255.255.0"
+        
+        # Failover configuration (Crucial for High Availability NFS)
+        failover_policy: "broadcast-domain-wide"
+        firewall_policy: "data"
+        <<: "{{ ontap_connection }}"
+
+    # ----------------------------------------------------
+    # 2. iSCSI Data LIFs (IP-based, block storage)
+    # ----------------------------------------------------
+    - name: Create 1st iSCSI Data LIF for Trident
+      netapp.ontap.na_ontap_interface:
+        state: present
+        vserver: "{{ svm_name }}"
+        interface_name: "{{ iscsi_lif_name1 }}"
+        home_node: "{{ ontap_node }}"
+        home_port: "e0d"
+        
+        # Protocol & Role
+        role: data
+        protocols: iscsi
+        
+        # IP Configuration
+        address: "{{ iscsi_lif_ip1 }}"
+        netmask: "255.255.255.0"
+        
+        # iSCSI interfaces do NOT fail over (MPIO handles redundancy)
+        failover_policy: "disabled"
+        firewall_policy: "data"
+        <<: "{{ ontap_connection }}"
+
+    # ----------------------------------------------------
+    # 3. iSCSI Data LIF (IP-based, block storage)
+    # ----------------------------------------------------
+    - name: Create 2nd iSCSI Data LIF for Trident
+      netapp.ontap.na_ontap_interface:
+        state: present
+        vserver: "{{ svm_name }}"
+        interface_name: "{{ iscsi_lif_name2 }}"
+        home_node: "{{ ontap_node }}"
+        home_port: "e0d"
+        
+        # Protocol & Role
+        role: data
+        protocols: iscsi
+        
+        # IP Configuration
+        address: "{{ iscsi_lif_ip2 }}"
+        netmask: "255.255.255.0"
+        
+        # iSCSI interfaces do NOT fail over (MPIO handles redundancy)
+        failover_policy: "disabled"
+        firewall_policy: "data"
+        <<: "{{ ontap_connection }}"
+
+- name: Create NFS server on Trident SVM
+  hosts: localhost
+  gather_facts: false
+  netapp.ontap.na_ontap_nfs:
+    state: present
+    # Connection details (best injected via AWX credentials/variables)
+    hostname: "{{ ontap_hostname }}"
+    username: "{{ ontap_username }}"
+    password: "{{ ontap_password }}"
+    https: true
+    validate_certs: false
+
+    # NFS Configuration
+    vserver: "{{ svm_name }}"
+    nfsv3: enabled
+    nfsv4: disabled
+    nfsv41: disabled
+
+- name: Create iSCSI service on Trident SVM
+  hosts: localhost
+  gather_facts: false
+  netapp.ontap.na_ontap_iscsi:
+    state: present
+    # Connection details (best injected via AWX credentials/variables)
+    hostname: "{{ ontap_hostname }}"
+    username: "{{ ontap_username }}"
+    password: "{{ ontap_password }}"
+    https: true
+    validate_certs: false
+
+    # iSCSI Configuration
+    vserver: "{{ svm_name }}"
+    service_state: started
