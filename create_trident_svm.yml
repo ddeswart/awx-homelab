@@ -126,13 +126,14 @@
       password: "{{ ontap_password }}"
       https: true
       validate_certs: false
+    
+    svm_name: "{{ svm_name }}"
+    policy_name: "k8s_nodes_policy"
+    k8s_worker_subnet: "192.168.0.0/24"
 
   module_defaults:
     netapp.ontap.na_ontap_export_policy: "{{ ontap_connection }}"
     netapp.ontap.na_ontap_export_policy_rule: "{{ ontap_connection }}"
-    svm_name: "{{ svm_name }}"
-    policy_name: "k8s_nodes_policy"
-    k8s_worker_subnet: "192.168.0.0/24" 
 
   tasks:
     # ----------------------------------------------------
