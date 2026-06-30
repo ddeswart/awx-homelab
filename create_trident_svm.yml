@@ -15,7 +15,7 @@
     
     # SVM Configuration
     ipspace: "Default"
-    root_volume: "trident_svm_root"
+    root_volume: "{{ root_vol_name }}"
     root_volume_aggregate: "aggr1"
     root_volume_security_style: "unix"
     
@@ -46,7 +46,7 @@
         vserver: "{{ svm_name }}"
         interface_name: "{{ nfs_lif_name }}"
         home_node: "{{ ontap_node }}"
-        home_port: "e0c"
+        home_port: "e0b"
         
         # Protocol & Role
         role: data
@@ -70,7 +70,7 @@
         vserver: "{{ svm_name }}"
         interface_name: "{{ iscsi_lif_name1 }}"
         home_node: "{{ ontap_node }}"
-        home_port: "e0d"
+        home_port: "e0c"
         
         # Protocol & Role
         role: data
@@ -94,7 +94,7 @@
         vserver: "{{ svm_name }}"
         interface_name: "{{ iscsi_lif_name2 }}"
         home_node: "{{ ontap_node }}"
-        home_port: "e0d"
+        home_port: "e0c"
         
         # Protocol & Role
         role: data
