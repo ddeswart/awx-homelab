@@ -7,8 +7,8 @@
     # Cluster Connection details
     ontap_connection:
       hostname: "{{ ontap_hostname }}"
-      #username: "{{ ontap_username }}"
-      #password: "{{ ontap_password }}"
+      username: "{{ ontap_username }}"
+      password: "{{ ontap_password }}"
       https: true
       validate_certs: false
 
