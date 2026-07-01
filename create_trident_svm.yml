@@ -2,7 +2,11 @@
 - name: Deploy and Configure NetApp ONTAP SVM for Kubernetes/Trident
   hosts: localhost
   gather_facts: false
-  
+
+  environment:
+    NETAPP_USERNAME: "{{ ontap_username }}"
+    NETAPP_PASSWORD: "{{ ontap_password }}"
+    
   vars:
     # Cluster Connection details
     ontap_connection:
