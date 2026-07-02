@@ -1,0 +1,5 @@
+ansible-core
+netapp-lib
+kubernetes
+proxmoxer
+requests
