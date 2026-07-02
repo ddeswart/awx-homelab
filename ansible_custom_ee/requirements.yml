@@ -1,0 +1,13 @@
+---
+collections:
+  - name: awx.awx
+  - name: netapp.ontap
+  - name: kubernetes.core
+  - name: community.general
+  - name: community.docker
+  - name: community.proxmox
+roles:
+  - name: geerlingguy.docker
+  - name: geerlingguy.pip
+  - name: geerlingguy.repo-epel
+  - name: xanmanning.k3s
