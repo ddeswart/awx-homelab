@@ -3,10 +3,10 @@
   hosts: localhost
   gather_facts: false
   vars:
-    cluster_name: "rke2-prod-cluster"
+    cluster_name: "kcluster1"
     ontap_management_ip: "192.168.0.141"
     ontap_data_ip: "192.168.0.146"
-    svm_name: "trident_svm"
+    svm_name: "trident_svm1"
     # Note: Pass kubeconfig and ONTAP credentials securely via AWX!
 
   tasks:
