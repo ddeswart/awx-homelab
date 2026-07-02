@@ -1,0 +1,22 @@
+---
+version: 3
+
+images:
+  base_image:
+    name: docker.io/almalinux/10-minimal:10.1-20260524
+
+dependencies:
+  ansible_core:
+    package_pip: ansible-core
+  ansible_runner:
+    package_pip: ansible-runner
+  galaxy: requirements.yml
+  python: requirements.txt
+
+additional_build_steps:
+  prepend_base:
+    - RUN microdnf install -y python3 python3-pip git
+    - RUN pip install passlib
+
+options:
+  package_manager_path: /usr/bin/microdnf
