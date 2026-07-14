@@ -172,6 +172,7 @@
           kind: VolumeSnapshotClass
           metadata:
             name: csi-ontap-snapclass
-            annotations: snapshot.storage.kubernetes.io/is-default-class: "true"
+            annotations: 
+              snapshot.storage.kubernetes.io/is-default-class: true
           driver: csi.trident.netapp.io
           deletionPolicy: Delete
