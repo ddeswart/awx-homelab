@@ -160,3 +160,18 @@
           allowVolumeExpansion: true
           volumeBindingMode: WaitForFirstConsumer
           reclaimPolicy: Delete
+
+    # ---------------------------------------------------
+    # 6. Create Kubernetes VolumeSnapshotClass
+    # ---------------------------------------------------
+    - name: Create Trident VolumeSnaphotClass
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: snapshot.storage.k8s.io/v1
+          kind: VolumeSnapshotClass
+          metadata:
+            name: csi-ontap-snapclass
+            annotations: snapshot.storage.kubernetes.io/is-default-class: "true"
+          driver: csi.trident.netapp.io
+          deletionPolicy: Delete
