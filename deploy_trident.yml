@@ -89,9 +89,9 @@
             managementLIF: "{{ ontap_management_ip }}"
             dataLIF: "{{ ontap_data_nasip }}"
             backendName: ontapsim1-backend-nas
-            autoExportCIDRs: "192.168.0.0/24"
-            autoExportPolicy: "true"
-            storagePrefix: "trident_"
+            autoExportCIDRs: 192.168.0.0/24
+            autoExportPolicy: true
+            storagePrefix: trident_
             nfsMountOptions: "nfsvers=3,nolock"
             defaults:
               snapshotDir: "true"
@@ -115,9 +115,9 @@
             sanType: "iscsi"
             svm: "{{ svm_name }}"
             managementLIF: "{{ ontap_management_ip }}"
-            backendName: "ontapsim1-backend-san"
-            igroupName: "trident-rke2-igroup"
-            storagePrefix: "trident_"
+            backendName: ontapsim1-backend-san
+            igroupName: trident-rke2-igroup
+            storagePrefix: trident_
             defaults:
               formatOptions: "-E nodiscard"
             credentials:
@@ -138,9 +138,9 @@
           parameters:
             backendType: "ontap-nas"
             nasType: "nfs"
-          allowVolumeExpansion: "true"
-          volumeBindingMode: "Immediate"
-          reclaimPolicy: "Delete"
+          allowVolumeExpansion: true
+          volumeBindingMode: Immediate
+          reclaimPolicy: Delete
 
     - name: Create Trident StorageClass for SAN
       kubernetes.core.k8s:
@@ -154,9 +154,9 @@
           parameters:
             backendType: "ontap-san"
             fsType: "ext4"
-          allowVolumeExpansion: "true"
-          volumeBindingMode: "WaitForFirstConsumer"
-          reclaimPolicy: "Delete"
+          allowVolumeExpansion: true
+          volumeBindingMode: WaitForFirstConsumer
+          reclaimPolicy: Delete
 
     # ---------------------------------------------------
     # 6. Create Kubernetes VolumeSnapshotClass
@@ -172,4 +172,4 @@
             annotations: 
               snapshot.storage.kubernetes.io/is-default-class: "true"
           driver: csi.trident.netapp.io
-          deletionPolicy: "Delete"
+          deletionPolicy: Delete
