@@ -42,8 +42,8 @@
       kubernetes.core.helm:
         name: trident-protect-crds
         chart_ref: netapp-trident-protect/trident-protect-crds
-        release_namespace: kube-system
-        create_namespace: false
+        release_namespace: trident-protect
+        create_namespace: true
         state: present
 
     - name: Install Trident Protect Operator
@@ -51,7 +51,6 @@
         name: trident-protect
         chart_ref: netapp-trident-protect/trident-protect
         release_namespace: trident-protect
-        create_namespace: true
         state: present
         wait: true
         values:
