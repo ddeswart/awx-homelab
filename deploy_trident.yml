@@ -93,7 +93,9 @@
               - "192.168.0.0/24"
             autoExportPolicy: true
             storagePrefix: trident_
-            nfsMountOptions: "nfsvers=3,nolock"
+            nfsMountOptions: 
+              - "nfsvers=3"
+              - "nolock"
             defaults:
               snapshotDir: "true"
               snapshotPolicy: "default-1weekly"
@@ -113,7 +115,7 @@
           spec:
             version: 1
             storageDriverName: ontap-san
-            sanType: "iscsi"
+            sanType: iscsi
             svm: "{{ svm_name }}"
             managementLIF: "{{ ontap_management_ip }}"
             backendName: ontapsim1-backend-san
