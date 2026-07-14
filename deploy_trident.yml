@@ -173,6 +173,6 @@
           metadata:
             name: csi-ontap-snapclass
             annotations: 
-              snapshot.storage.kubernetes.io/is-default-class: true
+              snapshot.storage.kubernetes.io/is-default-class: '"true"'
           driver: csi.trident.netapp.io
           deletionPolicy: Delete
