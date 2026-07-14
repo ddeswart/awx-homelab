@@ -6,7 +6,7 @@
     cluster_name: "kcluster1"
     ontap_management_ip: "192.168.0.141"
     ontap_data_nasip: "192.168.0.146"
-    svm_name: "trident_svm1"
+    svm_name: "trident-svm1"
     # Note: Pass kubeconfig and ONTAP credentials securely via AWX!
 
   tasks:
@@ -90,7 +90,7 @@
             dataLIF: "{{ ontap_data_nasip }}"
             backendName: ontapsim1-backend-nas
             autoExportCIDRs: 
-              - 192.168.0.0/24
+              - "192.168.0.0/24"
             autoExportPolicy: true
             storagePrefix: trident_
             nfsMountOptions: "nfsvers=3,nolock"
