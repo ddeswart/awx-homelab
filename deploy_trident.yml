@@ -89,7 +89,8 @@
             managementLIF: "{{ ontap_management_ip }}"
             dataLIF: "{{ ontap_data_nasip }}"
             backendName: ontapsim1-backend-nas
-            autoExportCIDRs: 192.168.0.0/24
+            autoExportCIDRs: 
+              - 192.168.0.0/24
             autoExportPolicy: true
             storagePrefix: trident_
             nfsMountOptions: "nfsvers=3,nolock"
