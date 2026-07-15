@@ -1,0 +1,92 @@
+---
+- name: Prepare Kubernetes Worker Nodes for NetApp Trident (NFS & iSCSI)
+  hosts: k8s_workers
+  become: true
+  vars:
+    # Set to true to reboot nodes after NFS installation (strongly recommended by NetApp)
+    reboot_after_nfs: false
+
+  tasks:
+    # ---------------------------------------------------------
+    # 1. Package Installation (NFS & iSCSI Tools)
+    # ---------------------------------------------------------
+    - name: Install NFS and iSCSI packages on Ubuntu
+      ansible.builtin.apt:
+        name:
+          - nfs-common
+          - open-iscsi
+          - lsscsi
+          - sg3-utils
+          - multipath-tools
+          - scsitools
+        state: present
+        update_cache: true
+      when: ansible_os_family == "Debian"
+
+    # ---------------------------------------------------------
+    # 2. iSCSI & Multipath Configuration
+    # ---------------------------------------------------------
+    - name: Configure iscsid.conf - Set session scan to manual
+      ansible.builtin.lineinfile:
+        path: /etc/iscsi/iscsid.conf
+        regexp: '^node.session.scan\s*='
+        line: 'node.session.scan = manual'
+        state: present
+      notify: Restart iscsid
+
+    - name: Check if multipath.conf exists
+      ansible.builtin.stat:
+        path: /etc/multipath.conf
+      register: multipath_conf_file
+
+    - name: Create basic multipath.conf if not existing
+      ansible.builtin.copy:
+        dest: /etc/multipath.conf
+        content: |
+          defaults {
+              user_friendly_names yes
+              find_multipaths no
+          }
+        mode: '0644'
+      when: not multipath_conf_file.stat.exists
+      notify: Restart multipathd
+
+    - name: Ensure find_multipaths is set to 'no' in multipath.conf (NetApp Requirement)
+      ansible.builtin.replace:
+        path: /etc/multipath.conf
+        regexp: '(?i)find_multipaths\s+(yes|smart)'
+        replace: 'find_multipaths no'
+      notify: Restart multipathd
+
+    # ---------------------------------------------------------
+    # 3. Enable and Start Services
+    # ---------------------------------------------------------
+    - name: Enable and start NFS/iSCSI services on Ubuntu
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: started
+        enabled: true
+      loop:
+        - iscsid
+        - open-iscsi
+        - multipath-tools
+      when: ansible_os_family == "Debian"
+
+    # ---------------------------------------------------------
+    # 4. NetApp Recommended Reboot (NFS Mount Issues)
+    # ---------------------------------------------------------
+    - name: Reboot worker nodes if requested (highly recommended for NFS)
+      ansible.builtin.reboot:
+        reboot_timeout: 600
+      when: reboot_after_nfs | bool
+
+  handlers:
+    - name: Restart iscsid
+      ansible.builtin.systemd:
+        name: iscsid
+        state: restarted
+
+    - name: Restart multipathd
+      ansible.builtin.systemd:
+        name: "{{ 'multipathd' if ansible_os_family == 'RedHat' else 'multipath-tools' }}"
+        state: restarted
