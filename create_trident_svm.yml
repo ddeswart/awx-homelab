@@ -14,13 +14,13 @@
 
     # Architecture Config (Allows you to easily adjust ports or subnets)
     svm_name: "{{ svm_name }}"
-    policy_name: "k8s_nodes_policy"
+    policy_name: "default"
     k8s_worker_subnet: "192.168.0.0/24"
     nfs_home_port: "e0b"
     iscsi_home_port_1: "e0b"
-    iscsi_home_port_2: "e0c" # Optimized for HA (MPIO) instead of sharing e0c
+    iscsi_home_port_2: "e0c"
 
-  # Map default connection details to ALL NetApp ONTAP modules in this play
+  # Map default connection details to ALL NetApp ONTAP modules in this playbook
   module_defaults:
     group/netapp.ontap.netapp_ontap: "{{ ontap_connection }}"
 
@@ -44,8 +44,9 @@
         state: present
         vserver: "{{ svm_name }}"
         nfsv3: enabled
-        nfsv4: disabled
-        nfsv41: disabled
+        nfsv4: enabled
+        nfsv41: enabled
+        nfsv42: enabled
 
     - name: Enable iSCSI Service
       netapp.ontap.na_ontap_iscsi:
@@ -81,7 +82,7 @@
         protocols: iscsi
         address: "{{ iscsi_lif_ip1 }}"
         netmask: "255.255.255.0"
-        failover_policy: "disabled" # iSCSI relies on ALUA/MPIO, not network failover
+        failover_policy: "disabled"
         firewall_policy: "data"
 
     - name: Create 2nd iSCSI Data LIF for Trident
@@ -113,8 +114,8 @@
         vserver: "{{ svm_name }}"
         policy_name: "{{ policy_name }}"
         client_match: "{{ k8s_worker_subnet }}"
-        ro_rule: any
-        rw_rule: any
-        super_user_security: any # Essential for K8s Persistent Volumes to mount with root permissions
+        ro_rule: sys
+        rw_rule: sys
+        super_user_security: sys
         protocol: nfs
         rule_index: 1
