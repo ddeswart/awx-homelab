@@ -34,12 +34,7 @@
         state: present
       notify: Restart iscsid
 
-    - name: Check if multipath.conf exists
-      ansible.builtin.stat:
-        path: /etc/multipath.conf
-      register: multipath_conf_file
-
-    - name: Create basic multipath.conf if not existing
+    - name: Ensure multipath.conf exists or create if missing
       ansible.builtin.copy:
         dest: /etc/multipath.conf
         content: |
@@ -48,14 +43,16 @@
               find_multipaths no
           }
         mode: '0644'
-      when: not multipath_conf_file.stat.exists
+        force: false # Only creates the file if it does not exist; won't overwrite existing configs
       notify: Restart multipathd
-
-    - name: Ensure find_multipaths is set to 'no' in multipath.conf (NetApp Requirement)
-      ansible.builtin.replace:
+      
+    - name: Ensure find_multipaths is explicitly configured to 'no'
+      ansible.builtin.lineinfile:
         path: /etc/multipath.conf
-        regexp: '(?i)find_multipaths\s+(yes|smart)'
-        replace: 'find_multipaths no'
+        regexp: '^\s*find_multipaths\s+'
+        insertafter: 'defaults\s*\{'
+        line: '    find_multipaths no'
+        state: present
       notify: Restart multipathd
 
     # ---------------------------------------------------------
