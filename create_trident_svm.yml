@@ -46,7 +46,6 @@
         nfsv3: enabled
         nfsv4: enabled
         nfsv41: enabled
-        nfsv42: enabled
 
     - name: Enable iSCSI Service
       netapp.ontap.na_ontap_iscsi:
