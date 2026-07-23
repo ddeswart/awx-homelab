@@ -24,7 +24,7 @@
         A 
         {{ shared_vm_ip }} 
         -U "{{ samba_admin_user }}%{{ samba_admin_password }}"
-      no_log: true
+      no_log: false
       register: forward_result
       changed_when: "'added successfully' in forward_result.stdout or forward_result.rc == 0"
 
@@ -37,6 +37,6 @@
         PTR 
         {{ shared_vm_name }}.{{ dns_zone }}.
         -U "{{ samba_admin_user }}%{{ samba_admin_password }}"
-      no_log: true
+      no_log: false
       register: reverse_result
       changed_when: "'added successfully' in reverse_result.stdout or reverse_result.rc == 0"
