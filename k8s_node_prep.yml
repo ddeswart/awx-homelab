@@ -4,7 +4,7 @@
   become: true
   vars:
     # Set to true to reboot nodes after NFS installation (strongly recommended by NetApp)
-    reboot_after_nfs: false
+    reboot_after_nfs: true
 
   tasks:
     # ---------------------------------------------------------
