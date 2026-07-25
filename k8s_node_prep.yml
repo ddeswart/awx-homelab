@@ -1,6 +1,6 @@
 ---
 - name: Prepare Kubernetes Worker Nodes for NetApp Trident (NFS & iSCSI)
-  hosts: k8s_workers
+  hosts: "{{ k8s_nodes }}"
   become: true
   vars:
     # Set to true to reboot nodes after NFS installation (strongly recommended by NetApp)
