@@ -1,11 +1,11 @@
 ---
-- name: Deploy Trident, Trident Protect, and Storage on RKE2
+- name: Deploy Trident, Trident Protect and configure Backend and Storage Class on RKE2
   hosts: localhost
   gather_facts: false
   vars:
-    cluster_name: "kcluster1"
-    ontap_management_ip: "192.168.0.141"
-    svm_name: "trident-svm1"
+    cluster_name: "kclusterx"
+    ontap_management_ip: "192.168.0.x"
+    svm_name: "trident-svmx"
     # Note: Pass kubeconfig and ONTAP credentials securely via AWX!
 
   tasks:
@@ -79,14 +79,14 @@
           apiVersion: trident.netapp.io/v1
           kind: TridentBackendConfig
           metadata:
-            name: backend-ontapsim1-nas
+            name: backend-ontap-nas
             namespace: trident
           spec:
             version: 1
             storageDriverName: ontap-nas
             svm: "{{ svm_name }}"
             managementLIF: "{{ ontap_management_ip }}"
-            backendName: ontapsim1-backend-nas
+            backendName: "{{ nas_backend_name }}"
             nasType: nfs
             mountOptions:
               - "nfsvers=4"
@@ -108,7 +108,7 @@
           apiVersion: trident.netapp.io/v1
           kind: TridentBackendConfig
           metadata:
-            name: backend-ontapsim1-san
+            name: backend-ontap-san
             namespace: trident
           spec:
             version: 1
@@ -116,7 +116,7 @@
             sanType: iscsi
             svm: "{{ svm_name }}"
             managementLIF: "{{ ontap_management_ip }}"
-            backendName: ontapsim1-backend-san
+            backendName: "{{ san_backend_name }}"
             storagePrefix: trident_
             defaults:
               formatOptions: "-E nodiscard"
@@ -133,7 +133,7 @@
           apiVersion: storage.k8s.io/v1
           kind: StorageClass
           metadata:
-            name: ontapsim1-sc-nfs
+            name: "{{ nas_storage_class }}"
           provisioner: csi.trident.netapp.io
           parameters:
             backendType: "ontap-nas"
@@ -147,7 +147,7 @@
           apiVersion: storage.k8s.io/v1
           kind: StorageClass
           metadata:
-            name: ontapsim1-sc-iscsi
+            name: "{{ san_storage_class }}"
           provisioner: csi.trident.netapp.io
           parameters:
             backendType: "ontap-san"
