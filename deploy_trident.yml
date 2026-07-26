@@ -50,6 +50,7 @@
         name: trident-protect
         chart_ref: netapp-trident-protect/trident-protect
         release_namespace: trident-protect
+        create_namespace: true
         skip_crds: true
         state: present
         wait: true
