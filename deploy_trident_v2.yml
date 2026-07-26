@@ -6,8 +6,8 @@
     cluster_name: "kclusterx"
     ontap_management_ip: "192.168.0.x"
     svm_name: "trident-svmx"
-    trident_csi_version: "100.2602.0"
-    trident_protect_version: "100.2602.0"
+    trident_csi_version: "100.2606.0"
+    trident_protect_version: "100.2606.0"
     # Note: Pass kubeconfig and ONTAP credentials securely via AWX!
 
   tasks:
