@@ -50,6 +50,8 @@
         name: trident-protect
         chart_ref: netapp-trident-protect/trident-protect
         release_namespace: trident-protect
+        arguments:
+          - "--skip-crds"
         state: present
         wait: true
         values:
