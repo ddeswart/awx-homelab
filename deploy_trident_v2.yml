@@ -1,0 +1,170 @@
+---
+- name: Deploy Trident, Trident Protect and configure Backend and Storage Class on RKE2
+  hosts: localhost
+  gather_facts: false
+  vars:
+    cluster_name: "kclusterx"
+    ontap_management_ip: "192.168.0.x"
+    svm_name: "trident-svmx"
+    trident_csi_version: "100.2602.0"
+    trident_protect_version: "100.2602.0"
+    # Note: Pass kubeconfig and ONTAP credentials securely via AWX!
+
+  tasks:
+    # ----------------------------------------------------
+    # 1. Add NetApp Helm Repositories
+    # ----------------------------------------------------
+    - name: Add NetApp Trident Helm Repository
+      kubernetes.core.helm_repository:
+        name: netapp-trident
+        repo_url: https://netapp.github.io/trident-helm-chart
+
+    - name: Add NetApp Trident Protect Helm Repository
+      kubernetes.core.helm_repository:
+        name: netapp-trident-protect
+        repo_url: https://netapp.github.io/trident-protect-helm-chart
+
+    # ----------------------------------------------------
+    # 2. Install Trident (CSI Driver)
+    # ----------------------------------------------------
+    - name: Install NetApp Trident via Helm
+      kubernetes.core.helm:
+        name: trident
+        chart_ref: netapp-trident/trident-operator
+        chart_version: "{{ trident_csi_version }}"
+        release_namespace: trident
+        create_namespace: true
+        state: present
+        wait: true
+
+    # ----------------------------------------------------
+    # 3. Install Trident protect (Data Management)
+    # ----------------------------------------------------
+    - name: Install Trident Protect Operator and CRDS via Helm
+      kubernetes.core.helm:
+        name: trident-protect
+        chart_ref: netapp-trident-protect/trident-protect
+        chart_version: "{{ trident_protect_version }}"
+        release_namespace: trident-protect
+        create_namespace: true
+        state: present
+        wait: true
+        values:
+          clusterName: "{{ cluster_name }}"
+          logLevel: "info"
+
+    # ----------------------------------------------------
+    # 4. Configure the Storage Backends
+    # ----------------------------------------------------
+    - name: Create Secret for ONTAP Credentials
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: backend-ontap-credentials
+            namespace: trident
+          type: Opaque
+          stringData:
+            username: "{{ ontap_username }}"
+            password: "{{ ontap_password }}"
+
+    - name: Create TridentBackendConfig for ONTAP NAS
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: trident.netapp.io/v1
+          kind: TridentBackendConfig
+          metadata:
+            name: backend-ontap-nas
+            namespace: trident
+          spec:
+            version: 1
+            storageDriverName: ontap-nas
+            svm: "{{ svm_name }}"
+            managementLIF: "{{ ontap_management_ip }}"
+            backendName: "{{ nas_backend_name }}"
+            nasType: nfs
+            mountOptions:
+              - "nfsvers=4"
+            autoExportCIDRs: 
+              - "192.168.0.0/24"
+            autoExportPolicy: true
+            storagePrefix: trident_
+            defaults:
+              snapshotDir: "true"
+              snapshotPolicy: "default-1weekly"
+              snapshotReserve: "10"
+            credentials:
+              name: backend-ontap-credentials
+    
+    - name: Create TridentBackendConfig for ONTAP SAN
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: trident.netapp.io/v1
+          kind: TridentBackendConfig
+          metadata:
+            name: backend-ontap-san
+            namespace: trident
+          spec:
+            version: 1
+            storageDriverName: ontap-san
+            sanType: iscsi
+            svm: "{{ svm_name }}"
+            managementLIF: "{{ ontap_management_ip }}"
+            backendName: "{{ san_backend_name }}"
+            storagePrefix: trident_
+            defaults:
+              formatOptions: "-E nodiscard"
+            credentials:
+              name: backend-ontap-credentials
+
+    # ---------------------------------------------------
+    # 5. Create Kubernetes StorageClasses
+    # ---------------------------------------------------
+    - name: Create Trident StorageClass for NAS
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: storage.k8s.io/v1
+          kind: StorageClass
+          metadata:
+            name: "{{ nas_storage_class }}"
+          provisioner: csi.trident.netapp.io
+          parameters:
+            backendType: "ontap-nas"
+            nasType: "nfs"
+          allowVolumeExpansion: true
+
+    - name: Create Trident StorageClass for SAN
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: storage.k8s.io/v1
+          kind: StorageClass
+          metadata:
+            name: "{{ san_storage_class }}"
+          provisioner: csi.trident.netapp.io
+          parameters:
+            backendType: "ontap-san"
+            sanType: "iscsi"
+            fsType: "ext4"
+          allowVolumeExpansion: true
+
+    # ---------------------------------------------------
+    # 6. Create Kubernetes VolumeSnapshotClass
+    # ---------------------------------------------------
+    - name: Create Trident VolumeSnaphotClass
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: snapshot.storage.k8s.io/v1
+          kind: VolumeSnapshotClass
+          metadata:
+            name: csi-ontap-snapclass
+            annotations: 
+              snapshot.storage.kubernetes.io/is-default-class: "true"
+          driver: csi.trident.netapp.io
+          deletionPolicy: Delete
